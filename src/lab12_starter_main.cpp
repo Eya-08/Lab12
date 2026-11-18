@@ -5,7 +5,7 @@
 // ---------- Choose which part runs ----------
 // Change this number to the part you are working on, then upload.
 // 3 = potentiometer, 4 = resolution, 5 = sampling, 6 = DAC, 7 = PWM, 8 = RC filter
-#define PART 3
+#define PART 8
 
 // ---------- Pin numbers ----------
 #define POT_PIN    34    // potentiometer wiper (ADC1)
@@ -21,25 +21,21 @@ const int ADC_BITS = 12;       // try 12, 11, 10 and 9
 
 
 // Part V – sampling
-const unsigned long SAMPLE_RATE = 200;   // samples per second (Hz)
+const unsigned long SAMPLE_RATE = 50;   // samples per second (Hz)
 const unsigned long SAMPLE_PERIOD = 1000000 / SAMPLE_RATE;   // µs between samples
 unsigned long lastSample = 0;   // time of the last sample (µs)
 unsigned long sampleCount = 0;  // samples taken in this second
 unsigned long lastSecond = 0;   // time the count started (ms)
 
 // Part VI – DAC
-const int DAC_VALUE = 128;     // 0 – 255
-const bool DAC_SINE = false;   // false = Step 1, true = Step 2 (sine wave)
-const int SINE_STEPS = 32;     // points in one sine cycle
+const int DAC_VALUE = 255;     // 0 – 255
+const bool DAC_SINE = true;   // false = Step 1, true = Step 2 (sine wave)
+const int SINE_STEPS = 8;     // points in one sine cycle
 const int STEP_DELAY = 30;     // ms between points
 
 // Part VII – PWM
-#define LED_CH    0            // PWM channel for the LED
-const int PWM_FREQ = 5000;     // PWM frequency (Hz)
+const int PWM_FREQ = 500;     // PWM frequency (Hz)
 const int PWM_RES = 8;         // 8 bits: duty 0 – 255
-
-
-
 
 
 // ---------- Part functions ----------
@@ -132,7 +128,7 @@ void partPWM()
 
   // Brightness follows the pot (Common Commands: "Scale a Value")
   int duty = map(potValue, 0, 4095, 0, 255);     // 0 – 4095 → 0 – 255
-  ledcWrite(LED_CH, duty);                        // set the LED duty
+  ledcWrite(LED_PIN, duty);                        // set the LED duty
 
   Serial.print("duty = ");  Serial.print(duty);
   Serial.print("   duty cycle = ");  Serial.print(duty * 100 / 255);  Serial.println(" %");
@@ -145,7 +141,7 @@ void partRC()
 {
   int potValue = analogRead(POT_PIN);
   int duty = map(potValue, 0, 4095, 0, 255);
-  ledcWrite(LED_CH, duty);
+  ledcWrite(LED_PIN, duty);
 
   // 200 fast readings of point A: keep the lowest, the highest and the total
   int lowest = 3300;
@@ -159,7 +155,7 @@ void partRC()
     total = total + v;
   }
 
-  int expected = duty * 3300 / 255;    // average PWM voltage in mV -----------------------------------------------------VERIFY IF THIS IS GOOD
+  int expected = duty * 3300 / 1000;    // average PWM voltage in mV -----------------------------------------------------VERIFY IF THIS IS GOOD
   int filtered = total / 200;           // average of the 200 readings in mV
   int ripple = highest - lowest;        // size of the up-and-down in mV
 
@@ -182,8 +178,7 @@ void setup()
 
 
   // PWM settings
-  ledcSetup(LED_CH, PWM_FREQ, PWM_RES);    // channel, frequency, resolution
-  ledcAttachPin(LED_PIN, LED_CH);          // connect the LED pin to its channel
+  ledcAttach(LED_PIN,PWM_FREQ,PWM_RES); // core3: pin,frequency,resolution 
 
 }
 
